@@ -1,0 +1,60 @@
+{
+    "model_name": "stop_severity_logistic_model",
+    "model_type": "LogisticRegression",
+    "machine": "MC09",
+    "target": "prolonged_STOP",
+    "target_definition": {
+        "positive_class": "STOP duration > 5 minutes",
+        "negative_class": "STOP duration <= 5 minutes",
+        "threshold_minutes": 5
+    },
+    "features": [
+        "minutes_since_previous_STOP",
+        "STOP_count_last_1min",
+        "STOP_count_last_5min",
+        "STOP_count_last_10min"
+    ],
+    "prediction_threshold": 0.3,
+    "training_period": {
+        "start": "2026-07-01 09:42:14",
+        "end": "2026-08-05 08:11:09"
+    },
+    "validation_period": {
+        "start": "2026-08-05 08:29:44",
+        "end": "2026-08-23 14:32:23"
+    },
+    "test_period": {
+        "start": "2026-08-23 15:25:39",
+        "end": "2026-08-31 06:46:09"
+    },
+    "data_quality_rule": {
+        "max_internal_stop_gap_seconds": 300
+    },
+    "validation_metrics": {
+        "balanced_accuracy": 0.6515,
+        "precision": 0.4118,
+        "recall": 0.6364,
+        "f1": 0.5,
+        "roc_auc": 0.6909,
+        "pr_auc": 0.4547
+    },
+    "final_test_metrics": {
+        "accuracy": 0.7349,
+        "balanced_accuracy": 0.7103,
+        "precision": 0.4286,
+        "recall": 0.6667,
+        "f1": 0.5217,
+        "roc_auc": 0.7449,
+        "pr_auc": 0.4165
+    },
+    "test_confusion_matrix": [
+        [
+            49,
+            16
+        ],
+        [
+            6,
+            12
+        ]
+    ]
+}

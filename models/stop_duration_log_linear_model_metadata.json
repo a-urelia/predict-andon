@@ -1,0 +1,26 @@
+{
+    "model": "Log-Linear Regression",
+    "target": "duration_minutes",
+    "target_transformation": "log1p",
+    "inverse_transformation": "expm1",
+    "features": [
+        "minutes_since_previous_STOP",
+        "STOP_count_last_1min",
+        "STOP_count_last_5min",
+        "STOP_count_last_10min"
+    ],
+    "validation_metrics": {
+        "MAE_minutes": 22.739316,
+        "RMSE_minutes": 166.938932,
+        "MAPE_percent": 264.685236
+    },
+    "test_metrics": {
+        "MAE_minutes": 37.9024,
+        "RMSE_minutes": 223.7904,
+        "MAPE_percent": 357.4918
+    },
+    "train_size": 246,
+    "validation_size": 82,
+    "test_size": 83,
+    "split_method": "chronological"
+}
