@@ -4,12 +4,23 @@ import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 from pathlib import Path
+import base64
+
+ASSET_DIR = Path(__file__).resolve().parent / "assets"
 
 
-# ============================================================
-# CONFIGURATION
-# ============================================================
+def asset_data_uri(filename, media_type):
+    encoded = base64.b64encode((ASSET_DIR / filename).read_bytes()).decode("ascii")
+    return f"data:{media_type};base64,{encoded}"
 
+
+brand_image = asset_data_uri("andon-stop.png", "image/png")
+page_icons = [
+    asset_data_uri(f"icon-page-{index}.svg", "image/svg+xml")
+    for index in range(1, 5)
+]
+
+# --- page configuration 
 st.set_page_config(
     page_title="Andon Stop Intelligence",
     page_icon="⚙️",
@@ -17,6 +28,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# --- page styling
 st.markdown(
     """
     <style>
@@ -47,10 +59,13 @@ st.markdown(
 
     .brand-header {
         margin: 0 0 2.5rem;
-        color: #000;
-        font-size: 1.25rem;
-        font-weight: 900;
-        line-height: 1.1;
+    }
+
+    .brand-header img {
+        display: block;
+        width: 200px;
+        max-width: 100%;
+        height: auto;
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] > label {
@@ -62,11 +77,24 @@ st.markdown(
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label {
+        position: relative;
         margin-right: -2rem;
-        padding: 0.875rem 1.25rem;
+        padding: 0.875rem 1.25rem 0.875rem 3.1rem;
         border-radius: 1.75rem 0 0 1.75rem;
+        background-repeat: no-repeat;
+        background-position: 1.25rem center;
+        background-size: 1.1rem;
         color: var(--andon-muted);
         transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child {
+        display: none;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadioOption"]:has(input:focus-visible) {
+        outline: 2px solid #174a32;
+        outline-offset: -2px;
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label:hover {
@@ -420,11 +448,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+icon_styles = "\n".join(
+    f'[data-testid="stSidebar"] [data-testid="stRadio"] '
+    f'[role="radiogroup"] label:has(input[value="{index - 1}"]) '
+    f'{{ background-image: url("{icon}"); }}'
+    for index, icon in enumerate(page_icons, start=1)
+)
+st.markdown(f"<style>{icon_styles}</style>", unsafe_allow_html=True)
 
-# ============================================================
-# LOAD MODELS
-# ============================================================
-
+# --- models
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR.parent / "models"
 
@@ -439,11 +471,7 @@ duration_model = joblib.load(
 SEVERITY_THRESHOLD = 0.30
 
 
-# ============================================================
-# LOAD DATA
-# ============================================================
-
-# Load either the prepared event dataset or raw MC09 telemetry.
+# --- load data
 DATA_PATH = BASE_DIR / "../data/mc09_andon.csv"
 
 df = pd.read_csv(DATA_PATH)
@@ -522,12 +550,9 @@ else:
 df["date"] = df["start_time"].dt.date
 
 
-# ============================================================
-# SIDEBAR
-# ============================================================
-
+# --- sidebar navi
 st.sidebar.markdown(
-    '<div class="brand-header">ANDON STOP<br>INTELLIGENCE</div>',
+    f'<div class="brand-header"><img src="{brand_image}" alt="Andon Stop Intelligence"></div>',
     unsafe_allow_html=True,
 )
 
@@ -543,10 +568,7 @@ page = st.sidebar.radio(
 )
 
 
-# ============================================================
-# PAGE 1 — DASHBOARD
-# ============================================================
-
+# --- page 1 : dashboard
 if page == "Dashboard":
 
     st.title("Dashboard")
@@ -725,10 +747,7 @@ if page == "Dashboard":
     )
 
 
-# ============================================================
-# PAGE 2 — STOP ANALYSIS
-# ============================================================
-
+# --- page 2 : stop analysis
 elif page == "STOP Analysis":
 
     st.title("STOP Analysis")
@@ -916,10 +935,7 @@ elif page == "STOP Analysis":
     )
 
 
-# ============================================================
-# PAGE 3 — PREDICTION
-# ============================================================
-
+# --- page 3 : prediction
 elif page == "Prediction":
 
     st.title("Prediction")
@@ -1029,10 +1045,7 @@ elif page == "Prediction":
         )
 
 
-# ============================================================
-# PAGE 4 — MODEL EVALUATION
-# ============================================================
-
+# --- page 4 : model evaluation
 elif page == "Model Evaluation":
 
     st.title("Model Evaluation")
