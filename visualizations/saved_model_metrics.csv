@@ -1,0 +1,5 @@
+Task,Split,balanced_accuracy,precision,recall,f1,roc_auc,pr_auc,accuracy,MAE_minutes,RMSE_minutes,MAPE_percent
+Severity classification,Validation,0.6515,0.4118,0.6364,0.5,0.6909,0.4547,,,,
+Severity classification,Test,0.7103,0.4286,0.6667,0.5217,0.7449,0.4165,0.7349,,,
+Duration regression,Validation,,,,,,,,22.739316,166.938932,264.685236
+Duration regression,Test,,,,,,,,37.9024,223.7904,357.4918

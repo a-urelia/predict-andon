@@ -1,0 +1,9 @@
+Measure,Value
+Reconstructed STOP groups,1531.0
+Positive-duration groups,701.0
+Zero-duration groups,830.0
+Prolonged groups (>5 min),120.0
+Median positive duration (min),0.5837833333333333
+90th percentile duration (min),11.824666666666667
+95th percentile duration (min),20.130816666666668
+Maximum positive duration (min),4612.057766666667

@@ -1,0 +1,8 @@
+Model,MAE_minutes,RMSE_minutes,MAPE_percent
+Mean Baseline,37.07,165.69,3200.94
+Median Baseline,22.8,167.09,232.07
+Linear Regression,25.81,166.21,1097.0
+Decision Tree,26.98,169.59,1316.91
+Random Forest,26.74,167.64,1056.28
+Log-Linear Regression,22.74,166.94,264.69
+Random Forest + Log Target,23.03,167.09,264.95
