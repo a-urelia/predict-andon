@@ -1,0 +1,57 @@
+{
+  "model_name": "stop_severity_logistic_model_minmax",
+  "model_type": "MinMaxScaler -> LogisticRegression",
+  "experiment_name": "MinMax scaling experiment",
+  "target": "prolonged_STOP",
+  "feature_names": [
+    "minutes_since_previous_STOP",
+    "STOP_count_last_1min",
+    "STOP_count_last_5min",
+    "STOP_count_last_10min"
+  ],
+  "dataset_size": 411,
+  "train_size": 246,
+  "validation_size": 82,
+  "test_size": 83,
+  "split_method": "chronological",
+  "scaler": "MinMaxScaler",
+  "scaler_feature_range": [
+    0,
+    1
+  ],
+  "scaler_fitted_on": "training data only",
+  "target_transformation": "none",
+  "classification_threshold": 0.3,
+  "validation_metrics": {
+    "accuracy": 0.7682926829268293,
+    "balanced_accuracy": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "roc_auc": 0.5588972431077694,
+    "pr_auc": 0.25455809339791197
+  },
+  "test_metrics": {
+    "accuracy": 0.8674698795180723,
+    "balanced_accuracy": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "roc_auc": 0.7626262626262628,
+    "pr_auc": 0.2814148938437979
+  },
+  "confusion_matrix": [
+    [
+      72
+    ],
+    [
+      11
+    ]
+  ],
+  "feature_metadata": {
+    "minutes_since_previous_STOP": "minutes_since_previous_STOP",
+    "STOP_count_last_1min": "STOP_count_last_1min",
+    "STOP_count_last_5min": "STOP_count_last_5min",
+    "STOP_count_last_10min": "STOP_count_last_10min"
+  }
+}

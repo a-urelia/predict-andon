@@ -1,0 +1,42 @@
+{
+  "model_name": "stop_duration_log_linear_model_minmax",
+  "model_type": "MinMaxScaler -> Log-Linear Regression",
+  "experiment_name": "MinMax scaling experiment",
+  "target": "duration_minutes",
+  "target_transformation": "log1p",
+  "inverse_target_transformation": "expm1",
+  "feature_names": [
+    "minutes_since_previous_STOP",
+    "STOP_count_last_1min",
+    "STOP_count_last_5min",
+    "STOP_count_last_10min"
+  ],
+  "dataset_size": 411,
+  "train_size": 246,
+  "validation_size": 82,
+  "test_size": 83,
+  "split_method": "chronological",
+  "scaler": "MinMaxScaler",
+  "scaler_feature_range": [
+    0,
+    1
+  ],
+  "scaler_fitted_on": "training data only",
+  "target_unit": "minutes",
+  "validation_metrics": {
+    "MAE_minutes": 13.559185677819286,
+    "RMSE_minutes": 62.402516012783,
+    "MAPE_percent": 1530.846068473569
+  },
+  "test_metrics": {
+    "MAE_minutes": 7.559030627612601,
+    "RMSE_minutes": 40.04079083963172,
+    "MAPE_percent": 641.3456688669862
+  },
+  "feature_metadata": {
+    "minutes_since_previous_STOP": "minutes_since_previous_STOP",
+    "STOP_count_last_1min": "STOP_count_last_1min",
+    "STOP_count_last_5min": "STOP_count_last_5min",
+    "STOP_count_last_10min": "STOP_count_last_10min"
+  }
+}
