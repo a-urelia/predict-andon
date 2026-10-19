@@ -1,0 +1,21 @@
+﻿model,split_label_in_metadata,metric,recorded_value,source_file,same_observation_set_verified,valid_before_after_comparison,reason
+baseline logistic,test,accuracy,0.7349,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline logistic,test,balanced_accuracy,0.7103,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline logistic,test,precision,0.4286,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline logistic,test,recall,0.6667,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline logistic,test,f1,0.5217,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline logistic,test,roc_auc,0.7449,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline logistic,test,pr_auc,0.4165,baseline classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,accuracy,0.867469879518,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,balanced_accuracy,0.5,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,precision,0,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,recall,0,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,f1,0,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,roc_auc,0.762626262626,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max logistic,test,pr_auc,0.281414893844,Min-Max classifier metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline log-linear,test,MAE_minutes,37.9024,baseline regressor metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline log-linear,test,RMSE_minutes,223.7904,baseline regressor metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+baseline log-linear,test,MAPE_percent,357.4918,baseline regressor metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max log-linear,test,MAE_minutes,7.55903062761,Min-Max regressor metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max log-linear,test,RMSE_minutes,40.0407908396,Min-Max regressor metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.
+Min-Max log-linear,test,MAPE_percent,641.345668867,Min-Max regressor metadata,False,False,Baseline event IDs and common split not persisted/verified; current candidate metadata periods differ from Min-Max script split.

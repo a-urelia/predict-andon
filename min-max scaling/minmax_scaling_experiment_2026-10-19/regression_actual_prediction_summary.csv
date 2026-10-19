@@ -1,0 +1,6 @@
+﻿model,split,source,expected_split_size_metadata,rows_found,actual_mean_minutes,actual_std_minutes_population,predicted_mean_minutes,predicted_std_minutes_population,split_row_count_matches_metadata
+baseline_log_linear,train,duration_predictions.csv filtered by baseline metadata timestamps,246,245,6.97590319728,30.7270720826,0.0432181973556,0.371874295592,False
+baseline_log_linear,validation,duration_predictions.csv filtered by baseline metadata timestamps,82,81,10.6306454733,53.0492543961,0.120851660355,0.540238230742,False
+baseline_log_linear,test,duration_predictions.csv filtered by baseline metadata timestamps,83,82,15.1414575203,74.3753237752,0,0,False
+minmax_log_linear_current_saved_artifact,validation,Inference only on current saved Min-Max artifact and experiment script split,82,82,13.4008920732,61.3176292083,-0.963515840941,0.086773262482,True
+minmax_log_linear_current_saved_artifact,test,Inference only on current saved Min-Max artifact and experiment script split,83,83,7.57709779116,39.5743474444,-0.990454110223,0.0279461556237,True

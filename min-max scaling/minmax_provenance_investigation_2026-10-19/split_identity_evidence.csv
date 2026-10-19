@@ -1,0 +1,16 @@
+﻿source,split,metadata_expected_n,reconstructed_rows_n,event_id_min,event_id_max,event_ids_are_contiguous,start_time_min,start_time_max,membership_status,all_stop_groups_in_period
+minmax_scaling_experiment.py reconstruction,train,246.0,246,1.0,561.0,False,2026-04-29 15:21:48,2026-06-26 00:00:15,Exact to current script reconstruction; artifact training identity is not persisted,
+minmax_scaling_experiment.py reconstruction,validation,82.0,82,568.0,813.0,False,2026-06-26 00:08:46,2026-07-07 20:52:20,Exact to current script reconstruction; artifact training identity is not persisted,
+minmax_scaling_experiment.py reconstruction,test,83.0,83,823.0,990.0,False,2026-07-08 06:00:15,2026-07-09 23:42:32,Exact to current script reconstruction; artifact training identity is not persisted,
+Current visualize.py event reconstruction filtered by metadata period,baseline train,246.0,245,692.0,1202.0,True,2026-07-01 09:42:14,2026-08-05 08:11:09,Candidate rows from current CSV/code; not proof of baseline training membership,511.0
+Current visualize.py event reconstruction filtered by metadata period,baseline validation,82.0,81,1203.0,1356.0,True,2026-08-05 08:29:44,2026-08-23 14:32:23,Candidate rows from current CSV/code; not proof of baseline training membership,154.0
+Current visualize.py event reconstruction filtered by metadata period,baseline test,83.0,82,1357.0,1531.0,True,2026-08-23 15:25:39,2026-08-31 06:46:09,Candidate rows from current CSV/code; not proof of baseline training membership,175.0
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline train vs minmax train,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline train vs minmax validation,,35,692.0,813.0,,,,Candidate intersection count=35; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline train vs minmax test,,83,823.0,990.0,,,,Candidate intersection count=83; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline validation vs minmax train,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline validation vs minmax validation,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline validation vs minmax test,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline test vs minmax train,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline test vs minmax validation,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,
+event_id overlap only (baseline period candidate vs Min-Max reconstructed IDs),baseline test vs minmax test,,0,,,,,,Candidate intersection count=0; baseline identity is unverified,

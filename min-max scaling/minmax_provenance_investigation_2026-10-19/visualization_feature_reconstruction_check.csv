@@ -1,0 +1,5 @@
+﻿feature,matched_event_rows,exact_match_after_csv_roundtrip,match_with_float_tolerance_1e-12,max_absolute_numeric_difference
+minutes_since_previous_STOP,701,False,True,4.54747350886e-13
+STOP_count_last_1min,701,True,True,0
+STOP_count_last_5min,701,True,True,0
+STOP_count_last_10min,701,True,True,0

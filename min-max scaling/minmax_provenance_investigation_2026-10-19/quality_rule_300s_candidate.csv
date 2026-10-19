@@ -1,0 +1,9 @@
+﻿diagnostic_interpretation_not_verified_as_actual_pipeline,threshold_seconds,groups_total_under_interpretation,positive_duration_groups_total,first_246_positive_training_candidate_n,first_246_candidate_maximum,first_246_candidate_minimum,first_246_candidate_start,first_246_candidate_end,feature
+reject original STOP groups with any internal gap >300s,300,1529,699,246,19414.2166667,0,2026-04-29 15:21:48,2026-06-26 00:10:18,minutes_since_previous_STOP
+reject original STOP groups with any internal gap >300s,300,1529,699,246,41,0,2026-04-29 15:21:48,2026-06-26 00:10:18,STOP_count_last_1min
+reject original STOP groups with any internal gap >300s,300,1529,699,246,84,0,2026-04-29 15:21:48,2026-06-26 00:10:18,STOP_count_last_5min
+reject original STOP groups with any internal gap >300s,300,1529,699,246,112,0,2026-04-29 15:21:48,2026-06-26 00:10:18,STOP_count_last_10min
+split original STOP group when adjacent internal gap >300s,300,1536,706,246,14022.05,0,2026-04-29 15:21:48,2026-06-25 18:18:31,minutes_since_previous_STOP
+split original STOP group when adjacent internal gap >300s,300,1536,706,246,41,0,2026-04-29 15:21:48,2026-06-25 18:18:31,STOP_count_last_1min
+split original STOP group when adjacent internal gap >300s,300,1536,706,246,84,0,2026-04-29 15:21:48,2026-06-25 18:18:31,STOP_count_last_5min
+split original STOP group when adjacent internal gap >300s,300,1536,706,246,112,0,2026-04-29 15:21:48,2026-06-25 18:18:31,STOP_count_last_10min

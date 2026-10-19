@@ -1,0 +1,5 @@
+﻿feature,fit_train_data_min,fit_train_data_max,fit_train_data_range,scale_,offset_min_,feature_range_min,feature_range_max,n_samples_seen_fit,saved_model_scaler_data_min,saved_model_scaler_data_max,saved_scaler_provenance_matches_reconstructed_train
+minutes_since_previous_STOP,0,18048.1666667,18048.1666667,5.54072897523e-05,0,0,1,246,0,18048.1666667,False
+STOP_count_last_1min,0,41,41,0.0243902439024,0,0,1,246,0,1,False
+STOP_count_last_5min,0,84,84,0.0119047619048,0,0,1,246,0,4,False
+STOP_count_last_10min,0,112,112,0.00892857142857,0,0,1,246,0,7,False

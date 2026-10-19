@@ -1,0 +1,5 @@
+﻿feature,script_current_fit_train_n,script_current_data_min,script_current_data_max,scaler_joblib_data_min,scaler_joblib_data_max,regression_pipeline_scaler_data_min,regression_pipeline_scaler_data_max,same_current_data_min_max,standalone_equals_classifier_pipeline,standalone_equals_regression_pipeline
+minutes_since_previous_STOP,246,0,18048.1666667,0,18048.1666667,0,18048.1666667,True,True,True
+STOP_count_last_1min,246,0,41,0,1,0,1,False,True,True
+STOP_count_last_5min,246,0,84,0,4,0,4,False,True,True
+STOP_count_last_10min,246,0,112,0,7,0,7,False,True,True

@@ -1,0 +1,8 @@
+Yth. Bapak/Ibu, saya telah menyiapkan ringkasan eksperimen Min-Max Scaling untuk fitur temporal.
+
+Metadata test mencatat Logistic Regression baseline accuracy 0.7349, balanced accuracy 0.7103, F1 0.5217; versi Min-Max tercatat 0.8675, 0.5000, 0.0000. Untuk regresi, baseline MAE/RMSE/MAPE tercatat 37.9024/223.7904/357.4918%, sedangkan metadata Min-Max mencatat 7.5590/40.0408/641.3457%.
+
+Angka tersebut belum dapat dianggap sebagai dampak scaling: periode/split baseline berbeda dari 411 event pada script Min-Max; maksimum fitur pada scaler tersimpan juga tidak cocok dengan data train hasil rekonstruksi (untuk tiga fitur hitungan tercatat 1/4/7, sedangkan data train 41/84/112). Beberapa metrik metadata Min-Max pun berbeda dari inferensi model tersimpan. Saya lampirkan dataset before-after, statistik, parameter scaler, serta catatan evaluasi untuk ditinjau sebelum menetapkan kesimpulan.
+
+Hormat saya,
+[Nama]
