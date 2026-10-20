@@ -1,13 +1,15 @@
-"""Run the thesis-controlled Min-Max scaling experiment without altering the baseline artifacts."""
+"""Run a reproducible, paired baseline vs Min-Max preprocessing experiment."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
+import sklearn
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -23,10 +25,9 @@ from sklearn.metrics import (
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_PATH = BASE_DIR / "data" / "mc09_andon.csv"
-MODEL_DIR = BASE_DIR / "models"
-VIS_DIR = BASE_DIR / "visualizations"
+OUTPUT_DIR = Path(__file__).resolve().parent / "controlled_preprocessing_comparison"
 FEATURES = [
     "minutes_since_previous_STOP",
     "STOP_count_last_1min",
@@ -34,42 +35,77 @@ FEATURES = [
     "STOP_count_last_10min",
 ]
 THRESHOLD = 0.30
-TRAIN_SIZE = 246
-VAL_SIZE = 82
-TEST_SIZE = 83
+MAX_INTERNAL_GAP_SECONDS = 300
+TRAIN_FRACTION = 0.60
+VALIDATION_FRACTION = 0.20
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def reconstruct_events() -> pd.DataFrame:
-    """Build the same STOP-event table used by the thesis workflow and retain the first 411 positive-duration events."""
-    telemetry = pd.read_csv(DATA_PATH)
-    telemetry = telemetry[["timestamp", "status", "downtimeCurrent"]].copy()
-    telemetry["timestamp"] = pd.to_datetime(telemetry["timestamp"], errors="coerce")
-    telemetry["status"] = telemetry["status"].astype("string").str.strip().str.upper()
+    """Reconstruct STOP segments, then engineer history features before filtering targets."""
+    telemetry = pd.read_csv(
+        DATA_PATH,
+        usecols=["timestamp", "status", "downtimeCurrent"],
+    )
+    telemetry["timestamp"] = pd.to_datetime(
+        telemetry["timestamp"],
+        errors="coerce",
+    )
+    telemetry["status"] = (
+        telemetry["status"].astype("string").str.strip().str.upper()
+    )
     telemetry["downtimeCurrent"] = pd.to_numeric(
-        telemetry["downtimeCurrent"], errors="coerce"
+        telemetry["downtimeCurrent"],
+        errors="coerce",
     ).fillna(0)
-    telemetry = telemetry.dropna(subset=["timestamp"]).sort_values("timestamp")
+    telemetry = telemetry.dropna(subset=["timestamp"]).sort_values(
+        "timestamp",
+        kind="quicksort",
+    )
 
     stop_mask = telemetry["status"].eq("STOP")
-    stop_rows = telemetry.loc[stop_mask].copy()
-    stop_rows["_event_group"] = (~stop_mask).astype("int64").cumsum().loc[stop_mask]
+    telemetry["_source_stop_group"] = (~stop_mask).astype("int64").cumsum()
+    stop_rows = telemetry.loc[stop_mask]
 
-    events = (
-        stop_rows.groupby("_event_group", sort=False)
-        .agg(
-            start_time=("timestamp", "first"),
-            duration_minutes=("downtimeCurrent", "max"),
+    records = []
+    for source_group, group in stop_rows.groupby("_source_stop_group", sort=False):
+        group = group.sort_values("timestamp", kind="stable")
+        segment_ids = (
+            group["timestamp"]
+            .diff()
+            .dt.total_seconds()
+            .gt(MAX_INTERNAL_GAP_SECONDS)
+            .cumsum()
         )
-        .reset_index(drop=True)
-    )
-    events["duration_minutes"] /= 60_000
-    events = events[events["duration_minutes"] > 0].sort_values("start_time").reset_index(drop=True)
-    events = events.iloc[: 246 + 82 + 83].copy()
+        for segment_id, segment in group.groupby(segment_ids, sort=False):
+            records.append(
+                {
+                    "source_stop_group": int(source_group),
+                    "segment_in_source_group": int(segment_id) + 1,
+                    "start_time": segment["timestamp"].iloc[0],
+                    "duration_minutes": float(
+                        segment["downtimeCurrent"].max() / 60_000
+                    ),
+                }
+            )
 
-    start_times = events["start_time"]
-    start_values = start_times.astype("int64").to_numpy()
+    events = pd.DataFrame.from_records(records)
+    events = events.sort_values(
+        ["start_time", "source_stop_group", "segment_in_source_group"],
+        kind="stable",
+    ).reset_index(drop=True)
+    events["event_id"] = np.arange(1, len(events) + 1, dtype=np.int64)
+
+    start_values = events["start_time"].astype("int64").to_numpy()
     events["minutes_since_previous_STOP"] = (
-        start_times.diff().dt.total_seconds().div(60).fillna(0)
+        events["start_time"].diff().dt.total_seconds().div(60).fillna(0)
     )
     for window, column in [
         (1, "STOP_count_last_1min"),
@@ -77,244 +113,276 @@ def reconstruct_events() -> pd.DataFrame:
         (10, "STOP_count_last_10min"),
     ]:
         events[column] = [
-            index - np.searchsorted(
+            index
+            - np.searchsorted(
                 start_values[:index],
                 start_values[index] - window * 60_000_000_000,
                 side="right",
             )
             for index in range(len(start_values))
         ]
+
+    events["prolonged_STOP"] = (events["duration_minutes"] > 5).astype("int64")
+    events["split"] = pd.NA
+    eligible_indices = events.index[events["duration_minutes"] > 0]
+    eligible_count = len(eligible_indices)
+    if eligible_count < 3:
+        raise ValueError(
+            f"Expected at least 3 positive-duration events, found {eligible_count}."
+        )
+
+    train_end = int(eligible_count * TRAIN_FRACTION)
+    validation_end = int(
+        eligible_count * (TRAIN_FRACTION + VALIDATION_FRACTION)
+    )
+    if train_end == 0 or validation_end <= train_end or validation_end >= eligible_count:
+        raise ValueError(
+            f"Invalid chronological split boundaries for {eligible_count} events."
+        )
+    events.loc[eligible_indices[:train_end], "split"] = "train"
+    events.loc[eligible_indices[train_end:validation_end], "split"] = "validation"
+    events.loc[eligible_indices[validation_end:], "split"] = "test"
     return events
 
 
-def make_split(events: pd.DataFrame):
-    X = events[FEATURES].copy()
-    y_class = (events["duration_minutes"] > 5).astype(int)
-    y_reg = events["duration_minutes"]
-    train_end = TRAIN_SIZE
-    val_end = TRAIN_SIZE + VAL_SIZE
-
-    X_train = X.iloc[:train_end]
-    X_val = X.iloc[train_end:val_end]
-    X_test = X.iloc[val_end:]
-
-    y_train_class = y_class.iloc[:train_end]
-    y_val_class = y_class.iloc[train_end:val_end]
-    y_test_class = y_class.iloc[val_end:]
-
-    y_train_reg = np.log1p(y_reg.iloc[:train_end])
-    y_val_reg = np.log1p(y_reg.iloc[train_end:val_end])
-    y_test_reg = np.log1p(y_reg.iloc[val_end:])
-
-    return (
-        X_train,
-        X_val,
-        X_test,
-        y_train_class,
-        y_val_class,
-        y_test_class,
-        y_train_reg,
-        y_val_reg,
-        y_test_reg,
-        y_reg,
-    )
-
-
-def classification_metrics(y_true, probabilities, threshold=THRESHOLD):
-    y_pred = (probabilities >= threshold).astype(int)
+def classification_metrics(
+    y_true: pd.Series,
+    probabilities: np.ndarray,
+) -> dict[str, float | list[list[int]]]:
+    y_pred = (probabilities >= THRESHOLD).astype(int)
     return {
-        "accuracy": accuracy_score(y_true, y_pred),
-        "balanced_accuracy": balanced_accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, zero_division=0),
-        "recall": recall_score(y_true, y_pred, zero_division=0),
-        "f1": f1_score(y_true, y_pred, zero_division=0),
-        "roc_auc": roc_auc_score(y_true, probabilities),
-        "pr_auc": average_precision_score(y_true, probabilities),
-        "confusion_matrix": pd.crosstab(y_true, y_pred, rownames=["actual"], colnames=["pred"]).to_numpy().tolist(),
-        "threshold": float(threshold),
+        "accuracy": float(accuracy_score(y_true, y_pred)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, y_pred)),
+        "precision": float(precision_score(y_true, y_pred, zero_division=0)),
+        "recall": float(recall_score(y_true, y_pred, zero_division=0)),
+        "f1": float(f1_score(y_true, y_pred, zero_division=0)),
+        "roc_auc": float(roc_auc_score(y_true, probabilities)),
+        "pr_auc": float(average_precision_score(y_true, probabilities)),
+        "confusion_matrix": pd.crosstab(
+            y_true,
+            y_pred,
+            rownames=["actual"],
+            colnames=["predicted"],
+        ).reindex(index=[0, 1], columns=[0, 1], fill_value=0).to_numpy().tolist(),
     }
 
 
-def regression_metrics(y_true, predictions):
-    y_true = np.asarray(y_true, dtype=float)
-    predictions = np.asarray(predictions, dtype=float)
+def regression_metrics(
+    y_true: pd.Series,
+    predictions: np.ndarray,
+) -> dict[str, float]:
+    actual = y_true.to_numpy(dtype=float)
     return {
-        "MAE_minutes": mean_absolute_error(y_true, predictions),
-        "RMSE_minutes": np.sqrt(mean_squared_error(y_true, predictions)),
-        "MAPE_percent": np.mean(np.abs((y_true - predictions) / y_true)) * 100.0,
-        "actual_mean_minutes": float(y_true.mean()),
-        "predicted_mean_minutes": float(predictions.mean()),
-        "actual_std_minutes": float(y_true.std()),
-        "predicted_std_minutes": float(predictions.std()),
-        "actual_max_minutes": float(y_true.max()),
-        "predicted_max_minutes": float(predictions.max()),
+        "MAE_minutes": float(mean_absolute_error(actual, predictions)),
+        "RMSE_minutes": float(np.sqrt(mean_squared_error(actual, predictions))),
+        "MAPE_percent": float(
+            np.mean(np.abs((actual - predictions) / actual)) * 100.0
+        ),
     }
 
 
-def build_and_save_models():
+def make_model(scale_features: bool, task: str) -> Pipeline:
+    if task == "classification":
+        estimator = LogisticRegression(max_iter=1000)
+    elif task == "regression":
+        estimator = LinearRegression()
+    else:
+        raise ValueError(f"Unsupported task: {task}")
+
+    steps = []
+    if scale_features:
+        steps.append(("scaler", MinMaxScaler(feature_range=(0, 1))))
+    steps.append(("model", estimator))
+    return Pipeline(steps)
+
+
+def build_and_save_experiment() -> None:
+    OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
     events = reconstruct_events()
-    (
-        X_train,
-        X_val,
-        X_test,
-        y_train_class,
-        y_val_class,
-        y_test_class,
-        y_train_reg,
-        y_val_reg,
-        y_test_reg,
-        y_reg,
-    ) = make_split(events)
+    eligible = events.loc[events["duration_minutes"] > 0].copy()
+    split_assignments = eligible[["event_id", "start_time", "split"]].copy()
 
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_val_scaled = scaler.transform(X_val)
-    X_test_scaled = scaler.transform(X_test)
-
-    classification_pipeline = Pipeline(
-        steps=[
-            ("scaler", MinMaxScaler(feature_range=(0, 1))),
-            ("classifier", LogisticRegression(max_iter=1000)),
-        ]
+    events_path = OUTPUT_DIR / "reconstructed_events.csv"
+    split_path = OUTPUT_DIR / "split_assignments.csv"
+    events.to_csv(events_path, index=False, date_format="%Y-%m-%dT%H:%M:%S.%f")
+    split_assignments.to_csv(
+        split_path,
+        index=False,
+        date_format="%Y-%m-%dT%H:%M:%S.%f",
     )
-    classification_pipeline.fit(X_train, y_train_class)
-    val_prob = classification_pipeline.predict_proba(X_val)[:, 1]
-    test_prob = classification_pipeline.predict_proba(X_test)[:, 1]
-    val_metrics = classification_metrics(y_val_class, val_prob)
-    test_metrics = classification_metrics(y_test_class, test_prob)
 
-    regression_pipeline = Pipeline(
-        steps=[
-            ("scaler", MinMaxScaler(feature_range=(0, 1))),
-            ("regressor", LinearRegression()),
-        ]
+    train = eligible.loc[eligible["split"] == "train"]
+    validation = eligible.loc[eligible["split"] == "validation"]
+    test = eligible.loc[eligible["split"] == "test"]
+    X_train, X_validation, X_test = (
+        frame[FEATURES] for frame in (train, validation, test)
     )
-    regression_pipeline.fit(X_train, y_train_reg)
-    val_pred_log = regression_pipeline.predict(X_val)
-    test_pred_log = regression_pipeline.predict(X_test)
-    val_pred = np.expm1(val_pred_log)
-    test_pred = np.expm1(test_pred_log)
+    y_train_class = train["prolonged_STOP"]
+    y_validation_class = validation["prolonged_STOP"]
+    y_test_class = test["prolonged_STOP"]
+    y_train_log = np.log1p(train["duration_minutes"])
+    y_validation_duration = validation["duration_minutes"]
+    y_test_duration = test["duration_minutes"]
 
-    # Evaluate the actual transform-target model that matches the thesis approach.
-    val_reg_metrics = regression_metrics(y_reg.iloc[TRAIN_SIZE:TRAIN_SIZE + VAL_SIZE].to_numpy(), val_pred)
-    test_reg_metrics = regression_metrics(y_reg.iloc[TRAIN_SIZE + VAL_SIZE:].to_numpy(), test_pred)
+    if y_test_class.nunique() < 2 or y_validation_class.nunique() < 2:
+        raise ValueError(
+            "Both classes must appear in validation and test to calculate ROC-AUC."
+        )
 
-    # Use the fitted scaler separately for explicit artifact persistence per requirement.
-    scaler_model = MinMaxScaler(feature_range=(0, 1))
-    scaler_model.fit(X_train)
-    joblib.dump(classification_pipeline, MODEL_DIR / "stop_severity_logistic_model_minmax.joblib")
-    joblib.dump(scaler_model, MODEL_DIR / "stop_severity_logistic_model_minmax_scaler.joblib")
-    joblib.dump(regression_pipeline, MODEL_DIR / "stop_duration_log_linear_model_minmax.joblib")
-    joblib.dump(scaler_model, MODEL_DIR / "stop_duration_log_linear_model_minmax_scaler.joblib")
+    metrics = {}
+    predictions = split_assignments.copy()
+    predictions["actual_duration_minutes"] = eligible["duration_minutes"].to_numpy()
+    predictions["actual_prolonged_STOP"] = eligible["prolonged_STOP"].to_numpy()
 
-    classification_metadata = {
-        "model_name": "stop_severity_logistic_model_minmax",
-        "model_type": "MinMaxScaler -> LogisticRegression",
-        "experiment_name": "MinMax scaling experiment",
-        "target": "prolonged_STOP",
-        "feature_names": FEATURES,
-        "dataset_size": int(len(events)),
-        "train_size": int(TRAIN_SIZE),
-        "validation_size": int(VAL_SIZE),
-        "test_size": int(TEST_SIZE),
-        "split_method": "chronological",
-        "scaler": "MinMaxScaler",
-        "scaler_feature_range": [0, 1],
-        "scaler_fitted_on": "training data only",
-        "target_transformation": "none",
-        "classification_threshold": float(THRESHOLD),
-        "validation_metrics": {
-            "accuracy": float(val_metrics["accuracy"]),
-            "balanced_accuracy": float(val_metrics["balanced_accuracy"]),
-            "precision": float(val_metrics["precision"]),
-            "recall": float(val_metrics["recall"]),
-            "f1": float(val_metrics["f1"]),
-            "roc_auc": float(val_metrics["roc_auc"]),
-            "pr_auc": float(val_metrics["pr_auc"]),
-        },
-        "test_metrics": {
-            "accuracy": float(test_metrics["accuracy"]),
-            "balanced_accuracy": float(test_metrics["balanced_accuracy"]),
-            "precision": float(test_metrics["precision"]),
-            "recall": float(test_metrics["recall"]),
-            "f1": float(test_metrics["f1"]),
-            "roc_auc": float(test_metrics["roc_auc"]),
-            "pr_auc": float(test_metrics["pr_auc"]),
-        },
-        "confusion_matrix": test_metrics["confusion_matrix"],
-        "feature_metadata": {feature: feature for feature in FEATURES},
+    for variant, scale_features in [("unscaled", False), ("minmax", True)]:
+        classifier = make_model(scale_features, "classification")
+        classifier.fit(X_train, y_train_class)
+        validation_probability = classifier.predict_proba(X_validation)[:, 1]
+        test_probability = classifier.predict_proba(X_test)[:, 1]
+
+        regressor = make_model(scale_features, "regression")
+        regressor.fit(X_train, y_train_log)
+        validation_duration = np.expm1(regressor.predict(X_validation))
+        test_duration = np.expm1(regressor.predict(X_test))
+
+        metrics[variant] = {
+            "classification": {
+                "validation": classification_metrics(
+                    y_validation_class,
+                    validation_probability,
+                ),
+                "test": classification_metrics(y_test_class, test_probability),
+            },
+            "regression": {
+                "validation": regression_metrics(
+                    y_validation_duration,
+                    validation_duration,
+                ),
+                "test": regression_metrics(y_test_duration, test_duration),
+            },
+        }
+        predictions[f"{variant}_validation_probability"] = np.nan
+        predictions[f"{variant}_test_probability"] = np.nan
+        predictions[f"{variant}_validation_duration_minutes"] = np.nan
+        predictions[f"{variant}_test_duration_minutes"] = np.nan
+        predictions.loc[
+            predictions["split"] == "validation",
+            f"{variant}_validation_probability",
+        ] = validation_probability
+        predictions.loc[
+            predictions["split"] == "test",
+            f"{variant}_test_probability",
+        ] = test_probability
+        predictions.loc[
+            predictions["split"] == "validation",
+            f"{variant}_validation_duration_minutes",
+        ] = validation_duration
+        predictions.loc[
+            predictions["split"] == "test",
+            f"{variant}_test_duration_minutes",
+        ] = test_duration
+
+        joblib.dump(classifier, OUTPUT_DIR / f"{variant}_severity_model.joblib")
+        joblib.dump(regressor, OUTPUT_DIR / f"{variant}_duration_model.joblib")
+
+    predictions_path = OUTPUT_DIR / "evaluation_predictions.csv"
+    predictions.to_csv(
+        predictions_path,
+        index=False,
+        date_format="%Y-%m-%dT%H:%M:%S.%f",
+    )
+
+    scaler = make_model(True, "classification").named_steps["scaler"]
+    scaler.fit(X_train)
+    split_ids = {
+        name: frame["event_id"].astype(int).tolist()
+        for name, frame in (
+            ("train", train),
+            ("validation", validation),
+            ("test", test),
+        )
     }
-
-    regression_metadata = {
-        "model_name": "stop_duration_log_linear_model_minmax",
-        "model_type": "MinMaxScaler -> Log-Linear Regression",
-        "experiment_name": "MinMax scaling experiment",
-        "target": "duration_minutes",
-        "target_transformation": "log1p",
-        "inverse_target_transformation": "expm1",
-        "feature_names": FEATURES,
-        "dataset_size": int(len(events)),
-        "train_size": int(TRAIN_SIZE),
-        "validation_size": int(VAL_SIZE),
-        "test_size": int(TEST_SIZE),
-        "split_method": "chronological",
-        "scaler": "MinMaxScaler",
-        "scaler_feature_range": [0, 1],
-        "scaler_fitted_on": "training data only",
-        "target_unit": "minutes",
-        "validation_metrics": {
-            "MAE_minutes": float(val_reg_metrics["MAE_minutes"]),
-            "RMSE_minutes": float(val_reg_metrics["RMSE_minutes"]),
-            "MAPE_percent": float(val_reg_metrics["MAPE_percent"]),
+    metadata = {
+        "experiment_name": "Controlled unscaled vs Min-Max preprocessing comparison",
+        "status": "new paired rerun; not a reproduction of legacy baseline membership",
+        "raw_dataset": str(DATA_PATH.relative_to(BASE_DIR)),
+        "raw_dataset_sha256": sha256_file(DATA_PATH),
+        "reconstructed_events_sha256": sha256_file(events_path),
+        "split_assignments_sha256": sha256_file(split_path),
+        "evaluation_predictions_sha256": sha256_file(predictions_path),
+        "experiment_script_sha256": sha256_file(Path(__file__).resolve()),
+        "event_construction": {
+            "rule": "Split consecutive STOP rows when adjacent timestamp gap exceeds the threshold.",
+            "max_internal_gap_seconds": MAX_INTERNAL_GAP_SECONDS,
+            "duration": "Maximum downtimeCurrent within each segment, converted from milliseconds to minutes.",
+            "features_engineered_before_positive_duration_filter": True,
+            "features": FEATURES,
         },
-        "test_metrics": {
-            "MAE_minutes": float(test_reg_metrics["MAE_minutes"]),
-            "RMSE_minutes": float(test_reg_metrics["RMSE_minutes"]),
-            "MAPE_percent": float(test_reg_metrics["MAPE_percent"]),
+        "cohort": {
+            "all_reconstructed_stop_segments": int(len(events)),
+            "positive_duration_events": int(len(eligible)),
         },
-        "feature_metadata": {feature: feature for feature in FEATURES},
-    }
-
-    with (MODEL_DIR / "stop_severity_logistic_model_minmax_metadata.json").open("w", encoding="utf-8") as f:
-        json.dump(classification_metadata, f, indent=2)
-    with (MODEL_DIR / "stop_duration_log_linear_model_minmax_metadata.json").open("w", encoding="utf-8") as f:
-        json.dump(regression_metadata, f, indent=2)
-
-    comparison = {
-        "classification_baseline": {
-            "accuracy": 0.7349,
-            "balanced_accuracy": 0.7103,
-            "precision": 0.4286,
-            "recall": 0.6667,
-            "f1": 0.5217,
-            "roc_auc": 0.7449,
-            "pr_auc": 0.4165,
+        "split_method": "Chronological over positive-duration events in event start-time order.",
+        "split_sizes": {
+            name: int(len(frame))
+            for name, frame in (
+                ("train", train),
+                ("validation", validation),
+                ("test", test),
+            )
         },
-        "classification_minmax": {
-            "accuracy": float(test_metrics["accuracy"]),
-            "balanced_accuracy": float(test_metrics["balanced_accuracy"]),
-            "precision": float(test_metrics["precision"]),
-            "recall": float(test_metrics["recall"]),
-            "f1": float(test_metrics["f1"]),
-            "roc_auc": float(test_metrics["roc_auc"]),
-            "pr_auc": float(test_metrics["pr_auc"]),
+        "split_event_ids": split_ids,
+        "scaler": {
+            "type": "MinMaxScaler",
+            "feature_range": [0, 1],
+            "fitted_on": "training features only",
+            "training_data_min": dict(zip(FEATURES, scaler.data_min_.tolist())),
+            "training_data_max": dict(zip(FEATURES, scaler.data_max_.tolist())),
         },
-        "regression_baseline": {
-            "MAE_minutes": 37.9024,
-            "RMSE_minutes": 223.7904,
-            "MAPE_percent": 357.4918,
+        "classification": {
+            "target": "duration_minutes > 5",
+            "decision_threshold": THRESHOLD,
+            "metrics": {
+                variant: values["classification"]
+                for variant, values in metrics.items()
+            },
         },
-        "regression_minmax": {
-            "MAE_minutes": float(test_reg_metrics["MAE_minutes"]),
-            "RMSE_minutes": float(test_reg_metrics["RMSE_minutes"]),
-            "MAPE_percent": float(test_reg_metrics["MAPE_percent"]),
+        "regression": {
+            "target": "duration_minutes",
+            "target_transform": "log1p",
+            "prediction_inverse_transform": "expm1",
+            "metrics": {
+                variant: values["regression"]
+                for variant, values in metrics.items()
+            },
+        },
+        "software": {
+            "pandas": pd.__version__,
+            "numpy": np.__version__,
+            "scikit_learn": sklearn.__version__,
         },
     }
-    pd.DataFrame([comparison]).to_csv(VIS_DIR / "minmax_scaling_experiment_summary.csv", index=False)
+    with (OUTPUT_DIR / "experiment_metadata.json").open(
+        "w",
+        encoding="utf-8",
+    ) as file:
+        json.dump(metadata, file, indent=2, allow_nan=False)
+
+    pd.DataFrame(
+        [
+            {
+                "variant": variant,
+                "task": task,
+                "split": split,
+                **scores,
+            }
+            for variant, tasks in metrics.items()
+            for task, splits in tasks.items()
+            for split, scores in splits.items()
+        ]
+    ).to_csv(OUTPUT_DIR / "metrics_comparison.csv", index=False)
+    print(f"Paired experiment artifacts saved to: {OUTPUT_DIR}")
 
 
 if __name__ == "__main__":
-    MODEL_DIR.mkdir(exist_ok=True, parents=True)
-    VIS_DIR.mkdir(exist_ok=True, parents=True)
-    build_and_save_models()
-    print("Min-Max scaling experiment executed and artifacts were saved in models/ and visualizations/.")
+    build_and_save_experiment()
