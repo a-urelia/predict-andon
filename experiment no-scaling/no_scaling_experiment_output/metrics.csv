@@ -1,0 +1,5 @@
+task,split,accuracy,balanced_accuracy,precision,recall,f1,roc_auc,pr_auc,confusion_matrix,MAE_minutes,RMSE_minutes,MAPE_percent
+classification,validation,0.8014184397163121,0.5,0.0,0.0,0.0,0.6656131479140328,0.356353355080535,"[[113, 0], [28, 0]]",,,
+regression,validation,,,,,,,,,8.02491849328775,41.800026709405266,674.3673355521821
+classification,test,0.7676056338028169,0.4954545454545455,0.0,0.0,0.0,0.6644886363636363,0.3611870374663195,"[[109, 1], [32, 0]]",,,
+regression,test,,,,,,,,,10.28577588343816,57.58486579606034,744.5123348302258

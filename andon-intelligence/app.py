@@ -5,6 +5,7 @@ import joblib
 import matplotlib.pyplot as plt
 from pathlib import Path
 import base64
+import json
 
 ASSET_DIR = Path(__file__).resolve().parent / "assets"
 
@@ -458,14 +459,29 @@ st.markdown(f"<style>{icon_styles}</style>", unsafe_allow_html=True)
 
 # --- models
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_DIR = BASE_DIR.parent / "models"
+MODEL_DIR = (
+    BASE_DIR.parent
+    / "experiment yeo-johnson"
+    / "yeo_johnson_experiment_output"
+)
+
+PREDICTION_FEATURES = [
+    "minutes_since_previous_STOP",
+    "STOP_count_last_1min",
+    "STOP_count_last_5min",
+    "STOP_count_last_10min",
+]
+
+yeo_johnson_transformer = joblib.load(
+    MODEL_DIR / "yeo_johnson_transformer.joblib"
+)
 
 severity_model = joblib.load(
-    MODEL_DIR / "stop_severity_logistic_model.joblib"
+    MODEL_DIR / "severity_logistic_model.joblib"
 )
 
 duration_model = joblib.load(
-    MODEL_DIR / "stop_duration_log_linear_model.joblib"
+    MODEL_DIR / "duration_log_linear_model.joblib"
 )
 
 SEVERITY_THRESHOLD = 0.30
@@ -982,17 +998,18 @@ elif page == "Prediction":
             "STOP_count_last_1min": STOP_count_last_1min,
             "STOP_count_last_5min": STOP_count_last_5min,
             "STOP_count_last_10min": STOP_count_last_10min,
-        }])
+        }], columns=PREDICTION_FEATURES)
+        transformed_features = yeo_johnson_transformer.transform(features)
 
         severity_probability = float(
-            severity_model.predict_proba(features)[0, 1]
+            severity_model.predict_proba(transformed_features)[0, 1]
         )
         severity_label = (
             "Prolonged STOP"
             if severity_probability >= SEVERITY_THRESHOLD
             else "Normal STOP"
         )
-        duration_log_prediction = duration_model.predict(features)
+        duration_log_prediction = duration_model.predict(transformed_features)
         predicted_duration = max(float(np.expm1(duration_log_prediction)[0]), 0)
 
         st.session_state["prediction_result"] = {
@@ -1050,27 +1067,43 @@ elif page == "Model Evaluation":
 
     st.title("Model Evaluation")
 
+    evaluation_metrics = pd.read_csv(MODEL_DIR / "metrics.csv")
+    classification_test = evaluation_metrics.loc[
+        evaluation_metrics["task"].eq("classification")
+        & evaluation_metrics["split"].eq("test")
+    ].iloc[0]
+    regression_validation = evaluation_metrics.loc[
+        evaluation_metrics["task"].eq("regression")
+        & evaluation_metrics["split"].eq("validation")
+    ].iloc[0]
+    regression_test = evaluation_metrics.loc[
+        evaluation_metrics["task"].eq("regression")
+        & evaluation_metrics["split"].eq("test")
+    ].iloc[0]
+
     classification_col, regression_col = st.columns([1, 1], gap="large")
 
     with classification_col:
         with st.container(border=True):
             st.markdown("#### CLASSIFICATION")
             st.markdown(
-                """
+                f"""
                 <div class="evaluation-metrics-grid">
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Accuracy</div><div class="evaluation-metric-value">73.49%</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Precision</div><div class="evaluation-metric-value">42.86%</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Recall</div><div class="evaluation-metric-value">66.67%</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">F1-score</div><div class="evaluation-metric-value">52.17%</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">ROC-AUC</div><div class="evaluation-metric-value">74.49%</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">PR-AUC</div><div class="evaluation-metric-value">41.65%</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test Accuracy</div><div class="evaluation-metric-value">{classification_test['accuracy']:.2%}</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test Precision</div><div class="evaluation-metric-value">{classification_test['precision']:.2%}</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test Recall</div><div class="evaluation-metric-value">{classification_test['recall']:.2%}</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test F1-score</div><div class="evaluation-metric-value">{classification_test['f1']:.2%}</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test ROC-AUC</div><div class="evaluation-metric-value">{classification_test['roc_auc']:.2%}</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test PR-AUC</div><div class="evaluation-metric-value">{classification_test['pr_auc']:.2%}</div></div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
             st.markdown("##### Confusion Matrix")
-            confusion_values = np.array([[49, 16], [6, 12]])
+            confusion_values = np.array(
+                json.loads(classification_test["confusion_matrix"])
+            )
             confusion_fig, confusion_ax = plt.subplots(figsize=(5.6, 4.1))
             heatmap = confusion_ax.imshow(
                 confusion_values,
@@ -1120,39 +1153,34 @@ elif page == "Model Evaluation":
         with st.container(border=True):
             st.markdown("#### REGRESSION")
             st.markdown(
-                """
+                f"""
                 <div class="evaluation-regression-grid">
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Validation MAE</div><div class="evaluation-metric-value">22.74 min</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test MAE</div><div class="evaluation-metric-value">37.90 min</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test RMSE</div><div class="evaluation-metric-value">223.79 min</div></div>
-                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test MAPE</div><div class="evaluation-metric-value">357.49%</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Validation MAE</div><div class="evaluation-metric-value">{regression_validation['MAE_minutes']:.2f} min</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test MAE</div><div class="evaluation-metric-value">{regression_test['MAE_minutes']:.2f} min</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test RMSE</div><div class="evaluation-metric-value">{regression_test['RMSE_minutes']:.2f} min</div></div>
+                    <div class="evaluation-metric"><div class="evaluation-metric-label">Test MAPE</div><div class="evaluation-metric-value">{regression_test['MAPE_percent']:.2f}%</div></div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
         with st.container(border=True):
-            st.markdown("#### REGRESSION MODEL COMPARISON")
-            comparison = pd.DataFrame({
-                "Model": [
-                    "Mean Baseline",
-                    "Median Baseline",
-                    "Linear Regression",
-                    "Decision Tree",
-                    "Random Forest",
-                    "Log-Linear Regression",
-                    "Random Forest + Log Target",
-                ],
-                "MAE (min)": [
-                    37.07, 22.80, 25.81, 26.98, 26.74, 22.74, 23.03,
-                ],
-                "RMSE (min)": [
-                    165.69, 167.09, 166.21, 169.59, 167.64, 166.94, 167.09,
-                ],
-                "MAPE": [
-                    3200.94, 232.07, 1097.00, 1316.91, 1056.28, 264.69, 264.95,
-                ],
-            })
+            st.markdown("#### REGRESSION PREPROCESSING COMPARISON · TEST")
+            preprocessing_comparison = pd.read_csv(
+                MODEL_DIR / "preprocessing_comparison.csv"
+            )
+            comparison = preprocessing_comparison.loc[
+                preprocessing_comparison["task"].eq("regression")
+                & preprocessing_comparison["split"].eq("test"),
+                ["variant", "MAE_minutes", "RMSE_minutes", "MAPE_percent"],
+            ].rename(
+                columns={
+                    "variant": "Preprocessing",
+                    "MAE_minutes": "MAE (min)",
+                    "RMSE_minutes": "RMSE (min)",
+                    "MAPE_percent": "MAPE",
+                }
+            )
             comparison["MAE (min)"] = comparison["MAE (min)"].map(
                 lambda value: f"{value:.2f}"
             )
