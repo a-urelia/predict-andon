@@ -1,0 +1,15 @@
+Model,Split,MAE_minutes,RMSE_minutes,MAPE_percent
+Mean Baseline,validation,43.46261919,55.20985159,17916.45064
+Mean Baseline,test,47.32652307,66.43278537,19898.218
+Median Baseline,validation,8.040117258,42.11262038,185.5424474
+Median Baseline,test,10.34535857,57.81283926,210.2857846
+Linear Regression,validation,79.41774157,102.9602172,31979.27328
+Linear Regression,test,76.90008792,102.9782126,30426.85816
+Log-Linear Regression,validation,8.049937437,41.63747002,874.018023
+Log-Linear Regression,test,10.27306722,57.44989578,869.0663333
+Decision Tree,validation,28.63031371,100.4845629,8263.920411
+Decision Tree,test,86.45758572,543.1813513,9395.169414
+Random Forest,validation,37.21485846,106.744709,24064.31257
+Random Forest,test,80.5101304,349.249128,13133.1291
+Random Forest + Log Target,validation,18.60678745,65.99340649,2865.47684
+Random Forest + Log Target,test,20.31968731,77.61853613,1833.425453

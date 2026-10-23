@@ -1165,17 +1165,16 @@ elif page == "Model Evaluation":
             )
 
         with st.container(border=True):
-            st.markdown("#### REGRESSION PREPROCESSING COMPARISON · TEST")
-            preprocessing_comparison = pd.read_csv(
-                MODEL_DIR / "preprocessing_comparison.csv"
+            st.markdown("#### REGRESSION MODEL COMPARISON · YEO-JOHNSON TEST")
+            model_comparison = pd.read_csv(
+                MODEL_DIR / "regression_model_comparison.csv"
             )
-            comparison = preprocessing_comparison.loc[
-                preprocessing_comparison["task"].eq("regression")
-                & preprocessing_comparison["split"].eq("test"),
-                ["variant", "MAE_minutes", "RMSE_minutes", "MAPE_percent"],
+            comparison = model_comparison.loc[
+                model_comparison["Split"].eq("test"),
+                ["Model", "MAE_minutes", "RMSE_minutes", "MAPE_percent"],
             ].rename(
                 columns={
-                    "variant": "Preprocessing",
+                    "Model": "Model",
                     "MAE_minutes": "MAE (min)",
                     "RMSE_minutes": "RMSE (min)",
                     "MAPE_percent": "MAPE",
