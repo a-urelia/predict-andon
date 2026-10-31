@@ -45,28 +45,64 @@ st.markdown(
         background-color: var(--andon-sidebar);
     }
 
+    .stApp {
+        position: relative;
+        min-height: 100vh;
+    }
+
     [data-testid="stHeader"] {
         background: transparent;
     }
 
+    .app-shell {
+        padding: 0.35rem 0.2rem 1.5rem;
+    }
+
+    .page-header {
+        margin: 0 0 1.25rem;
+        padding: 1.15rem 1.3rem 1rem;
+        border: 1px solid #dfe9e0;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #f5fff2 0%, #edf7ff 100%);
+    }
+
+    .page-header h1 {
+        margin: 0 0 0.15rem;
+        color: #153d2d;
+        font-size: clamp(2rem, 2vw, 2.5rem);
+        line-height: 1.15;
+    }
+
+    .page-header p {
+        margin: 0;
+        color: #506557;
+        font-size: 0.92rem;
+        font-weight: 500;
+    }
+
     section[data-testid="stSidebar"] {
-        min-width: 280px;
-        width: 280px;
+        position: sticky;
+        top: 0;
+        min-width: 260px;
+        width: 25%;
+        max-width: 360px;
+        height: 100vh;
     }
 
     section[data-testid="stSidebar"] > div {
-        padding: 2rem 0 2rem 2rem;
+        padding: 1.4rem 0 2rem 1.05rem;
     }
 
     .brand-header {
-        margin: 0 0 2.5rem;
+        margin: 0 0 2rem;
     }
 
     .brand-header img {
         display: block;
-        width: 200px;
+        width: 150px;
         max-width: 100%;
         height: auto;
+        margin-left: 0.35rem;
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] > label {
@@ -79,14 +115,39 @@ st.markdown(
 
     [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label {
         position: relative;
-        margin-right: -2rem;
-        padding: 0.875rem 1.25rem 0.875rem 3.1rem;
+        display: flex;
+        align-items: center;
+        width: calc(100% + 3.2rem);
+        min-width: 220px;
+        margin-left: -0.6rem;
+        margin-right: -3.2rem;
+        padding: 0.875rem 1.25rem 0.875rem 3.2rem;
         border-radius: 1.75rem 0 0 1.75rem;
         background-repeat: no-repeat;
         background-position: 1.25rem center;
         background-size: 1.1rem;
         color: var(--andon-muted);
+        white-space: nowrap;
         transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label span {
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label::before {
+        position: absolute;
+        top: 50%;
+        left: 1.25rem;
+        width: 1.1rem;
+        height: 1.1rem;
+        content: "";
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transform: translateY(-50%);
+        opacity: 0.9;
     }
 
     [data-testid="stSidebar"] [data-testid="stRadioOption"] > div > div:first-child {
@@ -104,16 +165,31 @@ st.markdown(
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) {
-        background-color: var(--andon-active);
+        background: linear-gradient(90deg, #a0f078 0%, #86da5c 100%);
         color: var(--andon-ink);
-        font-weight: 600;
+        font-weight: 700;
+        box-shadow: inset -8px 0 0 rgba(24, 52, 25, 0.08);
+        margin-right: -0.25rem;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
     }
 
     [data-testid="stMain"] {
+        position: sticky;
+        top: 0;
+        height: 100vh;
         min-height: 100vh;
         background-color: #fff;
         border-radius: 2.5rem 0 0 2.5rem;
-        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.03);
+        box-shadow: -18px 0 28px rgba(10, 31, 17, 0.08), 0 22px 32px rgba(18, 39, 20, 0.04);
+        overflow: hidden;
+    }
+
+    [data-testid="stMain"] > div:first-child {
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
     }
 
     @media (max-width: 700px) {
@@ -129,12 +205,22 @@ st.markdown(
         margin: 1.5rem 0 1.75rem;
     }
 
+    .stat-card {
+        min-width: 0;
+        padding: 1.1rem 1.2rem;
+        border: 1px solid #dce6dc;
+        border-radius: 0.9rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f7faf7 100%);
+        box-shadow: 0 8px 18px rgba(18, 34, 24, 0.03);
+    }
+
     .dashboard-kpi {
         min-width: 0;
         padding: 1.1rem 1.2rem;
         border: 1px solid #dce6dc;
-        border-radius: 0.75rem;
-        background: #fff;
+        border-radius: 0.9rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f7faf7 100%);
+        box-shadow: 0 8px 18px rgba(18, 34, 24, 0.03);
     }
 
     .dashboard-kpi-label {
@@ -451,11 +537,18 @@ st.markdown(
 
 icon_styles = "\n".join(
     f'[data-testid="stSidebar"] [data-testid="stRadio"] '
-    f'[role="radiogroup"] label:has(input[value="{index - 1}"]) '
-    f'{{ background-image: url("{icon}"); }}'
+    f'[role="radiogroup"] label:has(input[value="{index - 1}"])::before {{ '
+    f'background-image: url("{icon}"); }}'
     for index, icon in enumerate(page_icons, start=1)
 )
-st.markdown(f"<style>{icon_styles}</style>", unsafe_allow_html=True)
+
+selected_icon_styles = "\n".join(
+    f'[data-testid="stSidebar"] [data-testid="stRadio"] '
+    f'[role="radiogroup"] label:has(input[value="{index - 1}"]:checked) {{ '
+    f'background: linear-gradient(90deg, #a0f078 0%, #86da5c 100%); color: var(--andon-ink); font-weight: 700; }}'
+    for index, icon in enumerate(page_icons, start=1)
+)
+st.markdown(f"<style>{icon_styles}{selected_icon_styles}</style>", unsafe_allow_html=True)
 
 # --- models
 BASE_DIR = Path(__file__).resolve().parent
@@ -566,6 +659,20 @@ else:
 df["date"] = df["start_time"].dt.date
 
 
+def render_page_header(title, subtitle):
+    st.markdown(
+        f"""
+        <div class="app-shell">
+            <div class="page-header">
+                <h1>{title}</h1>
+                <p>{subtitle}</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # --- sidebar navi
 st.sidebar.markdown(
     f'<div class="brand-header"><img src="{brand_image}" alt="Andon Stop Intelligence"></div>',
@@ -580,6 +687,7 @@ page = st.sidebar.radio(
         "Prediction",
         "Model Evaluation",
     ],
+    index=0,
     label_visibility="collapsed",
 )
 
@@ -587,7 +695,10 @@ page = st.sidebar.radio(
 # --- page 1 : dashboard
 if page == "Dashboard":
 
-    st.title("Dashboard")
+    render_page_header(
+        "Dashboard",
+        "Operational overview of STOP activity and duration distribution.",
+    )
 
     total_events = len(df)
     median_duration = df["duration_minutes"].median()
@@ -766,7 +877,10 @@ if page == "Dashboard":
 # --- page 2 : stop analysis
 elif page == "STOP Analysis":
 
-    st.title("STOP Analysis")
+    render_page_header(
+        "STOP Analysis",
+        "Temporal patterns and the most extreme STOP events in the dataset.",
+    )
 
     temporal_col, frequency_col = st.columns([1.15, 1])
 
@@ -954,7 +1068,10 @@ elif page == "STOP Analysis":
 # --- page 3 : prediction
 elif page == "Prediction":
 
-    st.title("Prediction")
+    render_page_header(
+        "Prediction",
+        "Estimate whether the next STOP is likely to be prolonged and how long it may last.",
+    )
 
     input_col, results_col = st.columns([0.9, 1.1], gap="large")
 
@@ -1065,7 +1182,10 @@ elif page == "Prediction":
 # --- page 4 : model evaluation
 elif page == "Model Evaluation":
 
-    st.title("Model Evaluation")
+    render_page_header(
+        "Model Evaluation",
+        "Performance summary for the classification and duration models.",
+    )
 
     evaluation_metrics = pd.read_csv(MODEL_DIR / "metrics.csv")
     classification_test = evaluation_metrics.loc[
