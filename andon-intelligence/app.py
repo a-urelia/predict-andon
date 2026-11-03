@@ -109,11 +109,13 @@ st.markdown(
     section[data-testid="stSidebar"] {
         position: sticky;
         top: 0;
+        z-index: 1;
         min-width: 260px;
         width: 25%;
         max-width: 360px;
+        flex: 0 0 25% !important;
         height: 100vh;
-        overflow: hidden;
+        overflow: visible;
     }
 
     section[data-testid="stSidebar"] > div {
@@ -192,23 +194,31 @@ st.markdown(
     }
 
     [data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) {
+        position: relative;
+        z-index: 1;
+        width: calc(100% + 4.25rem);
         background: linear-gradient(90deg, #a0f078 0%, #86da5c 100%);
         color: var(--andon-ink);
         font-weight: 700;
-        box-shadow: inset -8px 0 0 rgba(24, 52, 25, 0.08);
-        margin-right: -0.25rem;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+        margin-right: -4.25rem;
+        border-radius: 9999px 0 0 9999px;
     }
 
     [data-testid="stMain"] {
         position: sticky;
         top: 0;
+        z-index: 2;
+        flex: 1 1 auto !important;
+        width: calc(100% + 8rem) !important;
+        min-width: 0;
+        max-width: none;
+        margin-left: -8rem !important;
+        resize: none !important;
         height: 100vh;
         min-height: 100vh;
         background-color: #fff;
         border-radius: 2.5rem 0 0 2.5rem;
-        box-shadow: -18px 0 28px rgba(10, 31, 17, 0.08), 0 22px 32px rgba(18, 39, 20, 0.04);
+        box-shadow: -24px 0 30px rgba(10, 31, 17, 0.14), 0 22px 28px rgba(18, 39, 20, 0.04);
         overflow: hidden;
     }
 
