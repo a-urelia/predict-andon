@@ -33,11 +33,17 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
     :root {
         --andon-sidebar: #e5f4e3;
         --andon-active: #8ce663;
         --andon-ink: #0d2806;
         --andon-muted: #556254;
+    }
+
+    html, body, [class*="st"], .stApp {
+        font-family: "Inter", sans-serif;
     }
 
     .stApp,
@@ -54,8 +60,28 @@ st.markdown(
         background: transparent;
     }
 
+    [data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+    }
+
     .app-shell {
         padding: 0.35rem 0.2rem 1.5rem;
+    }
+
+    .app-shell-compact {
+        padding-bottom: 0.25rem;
+    }
+
+    .app-shell-compact .page-header {
+        margin-bottom: 0.25rem;
+    }
+
+    .app-shell-balanced {
+        padding-bottom: 0.75rem;
+    }
+
+    .app-shell-balanced .page-header {
+        margin-bottom: 0.65rem;
     }
 
     .page-header {
@@ -87,6 +113,7 @@ st.markdown(
         width: 25%;
         max-width: 360px;
         height: 100vh;
+        overflow: hidden;
     }
 
     section[data-testid="stSidebar"] > div {
@@ -202,7 +229,26 @@ st.markdown(
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 1rem;
-        margin: 1.5rem 0 1.75rem;
+        margin: 0.5rem 0 1.75rem;
+    }
+
+    .dashboard-chart-title {
+        margin: 0 0 0.65rem;
+        color: #174a32;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+        text-transform: uppercase;
+    }
+
+    .st-key-dashboard-trend-card,
+    .st-key-dashboard-duration-card {
+        height: 100%;
+    }
+
+    .st-key-dashboard-trend-card [data-testid="stVerticalBlockBorderWrapper"],
+    .st-key-dashboard-duration-card [data-testid="stVerticalBlockBorderWrapper"] {
+        height: 100%;
     }
 
     .stat-card {
@@ -253,12 +299,15 @@ st.markdown(
         border-radius: 0.75rem;
         color: #fff;
         text-align: center;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -8px 12px rgba(0, 0, 0, 0.09);
     }
 
     .dashboard-summary-title {
         margin-bottom: 0.4rem;
         font-size: 0.78rem;
         font-weight: 750;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     .dashboard-summary-detail {
@@ -287,6 +336,28 @@ st.markdown(
         overflow-x: auto;
         border: 1px solid #dce3df;
         border-radius: 0.5rem;
+    }
+
+    .analysis-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin: 0 0 0.65rem;
+        color: #174a32;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+        text-transform: uppercase;
+    }
+
+    .analysis-title-tag {
+        padding: 0.2rem 0.5rem;
+        border-radius: 999px;
+        background: #e5f3e7;
+        color: #28643c;
+        font-size: 0.65rem;
+        font-weight: 750;
+        white-space: nowrap;
     }
 
     .extreme-events-table {
@@ -320,35 +391,86 @@ st.markdown(
     .evaluation-metrics-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        margin: 1rem 0 1.3rem;
+        gap: 0.8rem;
+        margin: 0.35rem 0 1.25rem;
     }
 
     .evaluation-metric {
-        padding: 0.85rem 1rem;
+        padding: 0.8rem 0.9rem;
         border: 1px solid #dce6dc;
-        border-radius: 0.6rem;
-        background: #fff;
+        border-radius: 0.8rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f7faf7 100%);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
     }
 
     .evaluation-metric-label {
         color: #59665a;
-        font-size: 0.76rem;
-        font-weight: 650;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
     }
 
     .evaluation-metric-value {
         margin-top: 0.35rem;
         color: #174a32;
-        font-size: 1.45rem;
-        font-weight: 750;
+        font-size: 1.35rem;
+        font-weight: 800;
     }
 
     .evaluation-regression-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 0.75rem;
-        margin-top: 0.8rem;
+        gap: 0.8rem;
+        margin: 0.55rem 0.45rem 1.25rem 0;
+    }
+
+    .evaluation-section-title {
+        margin: 0 0 0.5rem;
+        color: #174a32;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+        text-transform: uppercase;
+    }
+
+    .evaluation-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .evaluation-card > div:last-child {
+        flex: 1;
+    }
+
+    .evaluation-section-stack {
+        display: grid;
+        gap: 1.1rem;
+    }
+
+    .evaluation-note-card {
+        margin-top: 0.5rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid rgba(107, 92, 180, 0.22);
+        border-radius: 0.8rem;
+        background: linear-gradient(135deg, rgba(104, 103, 230, 0.12), rgba(138, 93, 192, 0.18));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+        color: #24372c;
+    }
+
+    .evaluation-note-card strong {
+        display: block;
+        margin-bottom: 0.35rem;
+        font-size: 0.76rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .evaluation-note-card p {
+        margin: 0;
+        font-size: 0.88rem;
+        line-height: 1.5;
     }
 
     .model-limitation-card {
@@ -372,6 +494,7 @@ st.markdown(
     }
 
     .comparison-table-wrap {
+        margin: 0.55rem 0 0.85rem;
         overflow-x: auto;
         border: 1px solid #dce3df;
         border-radius: 0.5rem;
@@ -416,6 +539,10 @@ st.markdown(
         background: #eff8f0;
     }
 
+    [data-testid="stForm"] {
+        border-color: #79b982;
+    }
+
     [data-testid="stNumberInput"] input:focus {
         border-color: #4a8b56;
         box-shadow: 0 0 0 1px #4a8b56;
@@ -435,22 +562,30 @@ st.markdown(
         font-weight: 750;
     }
 
+    .prediction-input-title {
+        margin: 0 0 0.75rem;
+        color: #174a32;
+        font-size: 1.05rem;
+        font-weight: 800;
+        line-height: 1.3;
+    }
+
     .prediction-result-values {
         display: flex;
         justify-content: space-between;
         gap: 1rem;
-        font-size: 1rem;
+        font-size: 0.95rem;
         font-weight: 650;
     }
 
     .prediction-result-values strong {
         display: block;
         margin-top: 0.3rem;
-        font-size: 1.15rem;
+        font-size: 1.4rem;
     }
 
     .prediction-gauge {
-        height: 0.6rem;
+        height: 1rem;
         margin: 1.2rem 0 0.6rem;
         overflow: hidden;
         border-radius: 999px;
@@ -496,11 +631,11 @@ st.markdown(
 
     .prediction-info-banner {
         margin-top: 1rem;
-        padding: 1.25rem;
+        padding: 1.1rem 1.25rem;
         border-radius: 0.75rem;
         background: #159cbd;
         color: #fff;
-        text-align: center;
+        text-align: left;
     }
 
     .prediction-info-banner strong {
@@ -513,6 +648,7 @@ st.markdown(
         margin-top: 0.25rem;
         font-size: 0.8rem;
         font-weight: 650;
+        line-height: 1.5;
     }
 
     [data-testid="stFormSubmitButton"] button {
@@ -659,10 +795,13 @@ else:
 df["date"] = df["start_time"].dt.date
 
 
-def render_page_header(title, subtitle):
+def render_page_header(title, subtitle, spacing="default"):
+    shell_class = "app-shell"
+    if spacing != "default":
+        shell_class += f" app-shell-{spacing}"
     st.markdown(
         f"""
-        <div class="app-shell">
+        <div class="{shell_class}">
             <div class="page-header">
                 <h1>{title}</h1>
                 <p>{subtitle}</p>
@@ -698,6 +837,7 @@ if page == "Dashboard":
     render_page_header(
         "Dashboard",
         "Operational overview of STOP activity and duration distribution.",
+        spacing="compact",
     )
 
     total_events = len(df)
@@ -739,14 +879,17 @@ if page == "Dashboard":
     )
     daily_events["date"] = pd.to_datetime(daily_events["date"])
 
-    trend_col, distribution_col = st.columns([1.15, 1])
+    trend_col, distribution_col = st.columns([1, 1], gap="small")
 
     with trend_col:
-        with st.container(border=True):
-            st.markdown("#### STOP EVENT TREND")
+        with st.container(border=True, key="dashboard-trend-card"):
+            st.markdown(
+                '<div class="dashboard-chart-title">STOP EVENT TREND</div>',
+                unsafe_allow_html=True,
+            )
             st.caption("Number of STOP events per day")
 
-            trend_fig, trend_ax = plt.subplots(figsize=(8, 4.1))
+            trend_fig, trend_ax = plt.subplots(figsize=(8, 4.8))
             trend_start = daily_events["date"].min().normalize()
             trend_end = daily_events["date"].max()
             shade_start = trend_start
@@ -781,10 +924,14 @@ if page == "Dashboard":
             trend_fig.tight_layout()
             st.pyplot(trend_fig, use_container_width=True)
             plt.close(trend_fig)
+            st.caption("Daily event counts show whether STOP frequency is stable or whether disruptions cluster in specific periods.")
 
     with distribution_col:
-        with st.container(border=True):
-            st.markdown("#### STOP DURATION DISTRIBUTION")
+        with st.container(border=True, key="dashboard-duration-card"):
+            st.markdown(
+                '<div class="dashboard-chart-title">STOP DURATION DISTRIBUTION</div>',
+                unsafe_allow_html=True,
+            )
 
             durations = df["duration_minutes"].dropna().clip(lower=0)
             duration_p95 = max(float(durations.quantile(0.95)), 0.01)
@@ -793,7 +940,7 @@ if page == "Dashboard":
             positive_durations = durations[durations > 0]
 
             distribution_fig, distribution_axes = plt.subplots(
-                2, 2, figsize=(8, 5.8)
+                2, 2, figsize=(8, 4.8)
             )
             linear_views = [
                 (durations[durations <= short_limit], short_limit, "Normal scale · 0–60 min"),
@@ -852,19 +999,20 @@ if page == "Dashboard":
             distribution_fig.tight_layout()
             st.pyplot(distribution_fig, use_container_width=True)
             plt.close(distribution_fig)
+            st.caption("The long-tail shape highlights that most disruptions are short, but a smaller set of very long STOPs drive the higher duration risk.")
 
     st.markdown(
         f"""
         <div class="dashboard-summary-row">
-            <div class="dashboard-summary" style="background:#159cbd">
+            <div class="dashboard-summary" style="background:#00B6CE; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -8px 12px rgba(0,0,0,0.09);">
                 <div class="dashboard-summary-title">TYPICAL STOP</div>
                 <div class="dashboard-summary-detail">Median duration: {median_duration:.2f} min</div>
             </div>
-            <div class="dashboard-summary" style="background:#8250b5">
+            <div class="dashboard-summary" style="background:#AB12A6; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -8px 12px rgba(0,0,0,0.09);">
                 <div class="dashboard-summary-title">LONG-TAIL CHECK</div>
                 <div class="dashboard-summary-detail">95% last {q95:.2f} min or less</div>
             </div>
-            <div class="dashboard-summary" style="background:#9b6500">
+            <div class="dashboard-summary" style="background:#D98600; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -8px 12px rgba(0,0,0,0.09);">
                 <div class="dashboard-summary-title">LONGEST STOP</div>
                 <div class="dashboard-summary-detail">{max_duration:.2f} min · {prolonged_events:,} prolonged events</div>
             </div>
@@ -880,9 +1028,10 @@ elif page == "STOP Analysis":
     render_page_header(
         "STOP Analysis",
         "Temporal patterns and the most extreme STOP events in the dataset.",
+        spacing="balanced",
     )
 
-    temporal_col, frequency_col = st.columns([1.15, 1])
+    temporal_col, frequency_col = st.columns([1, 1])
 
     gap = pd.to_numeric(df["minutes_since_previous_STOP"], errors="coerce")
     duration = pd.to_numeric(df["duration_minutes"], errors="coerce")
@@ -897,7 +1046,10 @@ elif page == "STOP Analysis":
 
     with temporal_col:
         with st.container(border=True):
-            st.markdown("#### TEMPORAL STOP PATTERN")
+            st.markdown(
+                '<div class="analysis-section-title">TEMPORAL STOP PATTERN</div>',
+                unsafe_allow_html=True,
+            )
             st.caption("Previous STOP gap vs current event duration")
 
             rapid_long = (
@@ -987,7 +1139,10 @@ elif page == "STOP Analysis":
 
     with frequency_col:
         with st.container(border=True):
-            st.markdown("#### STOP FREQUENCY BY TIME WINDOW")
+            st.markdown(
+                '<div class="analysis-section-title">STOP FREQUENCY BY TIME WINDOW</div>',
+                unsafe_allow_html=True,
+            )
             st.caption("Average STOP events per recorded day")
 
             time_window_labels = ["00–05", "05–10", "10–15", "15–20", "20–24"]
@@ -1024,7 +1179,11 @@ elif page == "STOP Analysis":
             st.pyplot(frequency_fig, use_container_width=True)
             plt.close(frequency_fig)
 
-    st.markdown("#### EXTREME STOP EVENTS")
+    st.markdown(
+        '<div class="analysis-section-title">EXTREME STOP EVENTS '
+        '<span class="analysis-title-tag">TOP 10</span></div>',
+        unsafe_allow_html=True,
+    )
 
     longest_events = (
         df[["event_id", "start_time", "end_time", "duration_minutes"]]
@@ -1071,13 +1230,17 @@ elif page == "Prediction":
     render_page_header(
         "Prediction",
         "Estimate whether the next STOP is likely to be prolonged and how long it may last.",
+        spacing="balanced",
     )
 
-    input_col, results_col = st.columns([0.9, 1.1], gap="large")
+    input_col, results_col = st.columns([0.9, 1.1], gap="medium")
 
     with input_col:
         with st.container(border=True):
-            st.markdown("#### STOP EVENT INFORMATION")
+            st.markdown(
+                '<div class="prediction-input-title">STOP EVENT INFORMATION</div>',
+                unsafe_allow_html=True,
+            )
 
             with st.form("stop_prediction_form"):
                 minutes_since_previous_STOP = st.number_input(
@@ -1171,8 +1334,8 @@ elif page == "Prediction":
                 <div class="prediction-duration-value">{duration_text}</div>
             </div>
             <div class="prediction-info-banner">
-                <strong>INFO</strong>
-                <span>(ON ESTIMATED RESULT)</span>
+                <strong>MODEL NOTE</strong>
+                <span>Duration and severity are estimates based on historical STOP patterns. Rare events or unusual operating conditions may reduce accuracy; use these results as decision support, not as a substitute for operator judgment.</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -1185,6 +1348,7 @@ elif page == "Model Evaluation":
     render_page_header(
         "Model Evaluation",
         "Performance summary for the classification and duration models.",
+        spacing="balanced",
     )
 
     evaluation_metrics = pd.read_csv(MODEL_DIR / "metrics.csv")
@@ -1201,11 +1365,14 @@ elif page == "Model Evaluation":
         & evaluation_metrics["split"].eq("test")
     ].iloc[0]
 
-    classification_col, regression_col = st.columns([1, 1], gap="large")
+    classification_col, regression_col = st.columns([1, 1], gap="medium")
 
     with classification_col:
         with st.container(border=True):
-            st.markdown("#### CLASSIFICATION")
+            st.markdown(
+                '<div class="evaluation-section-title">CLASSIFICATION</div>',
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f"""
                 <div class="evaluation-metrics-grid">
@@ -1220,11 +1387,15 @@ elif page == "Model Evaluation":
                 unsafe_allow_html=True,
             )
 
-            st.markdown("##### Confusion Matrix")
+        with st.container(border=True):
+            st.markdown(
+                '<div class="evaluation-section-title">CONFUSION MATRIX</div>',
+                unsafe_allow_html=True,
+            )
             confusion_values = np.array(
                 json.loads(classification_test["confusion_matrix"])
             )
-            confusion_fig, confusion_ax = plt.subplots(figsize=(5.6, 4.1))
+            confusion_fig, confusion_ax = plt.subplots(figsize=(5.8, 4.2))
             heatmap = confusion_ax.imshow(
                 confusion_values,
                 cmap="Greens",
@@ -1261,8 +1432,8 @@ elif page == "Model Evaluation":
 
         st.markdown(
             """
-            <div class="model-limitation-card">
-                <strong>MODEL LIMITATION</strong>
+            <div class="evaluation-note-card">
+                <strong>Model Limitation</strong>
                 <p>The duration model performs better on typical short STOPs than on rare extremes. Current temporal features do not provide enough information to identify those extreme events reliably.</p>
             </div>
             """,
@@ -1271,7 +1442,10 @@ elif page == "Model Evaluation":
 
     with regression_col:
         with st.container(border=True):
-            st.markdown("#### REGRESSION")
+            st.markdown(
+                '<div class="evaluation-section-title">REGRESSION</div>',
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f"""
                 <div class="evaluation-regression-grid">
@@ -1285,7 +1459,10 @@ elif page == "Model Evaluation":
             )
 
         with st.container(border=True):
-            st.markdown("#### REGRESSION MODEL COMPARISON · YEO-JOHNSON TEST")
+            st.markdown(
+                '<div class="evaluation-section-title">REGRESSION MODEL COMPARISON · YEO-JOHNSON TEST</div>',
+                unsafe_allow_html=True,
+            )
             model_comparison = pd.read_csv(
                 MODEL_DIR / "regression_model_comparison.csv"
             )
